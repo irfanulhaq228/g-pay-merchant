@@ -501,16 +501,22 @@ const TransactionsTable = ({ setSelectedPage, authorization, showSidebar, permis
                         </td>
                         <td className="p-4 text-[13px] font-[700] text-[#000000B2]">{transaction?.username && transaction?.username !== "" ? transaction?.username : "GUEST"}</td>
                         <td className="p-4 text-nowrap">
-                          {transaction?.bankId?.bankName !== "UPI" ? (
+                          {transaction?.bankId?.accountType === "bank" ? (
                             <div className="">
                               <span className="text-[13px] font-[700] text-black whitespace-nowrap">
-                                {transaction?.bankId?.bankName}
+                                {transaction?.bankId?.bankName}<span className="font-[400]"> - {transaction?.bankId?.iban}</span>
                               </span>
+                            </div>
+                          ) : transaction?.bankId?.accountType === "upi" ? (
+                            <div className="">
+                              <p className="text-[13px] font-[700] text-black ">
+                                UPI<span className="font-[400]"> - {transaction?.bankId?.iban}</span>
+                              </p>
                             </div>
                           ) : (
                             <div className="">
                               <p className="text-[13px] font-[700] text-black ">
-                                UPI<span className="font-[400]"> - {transaction?.bankId?.iban}</span>
+                                Crypto<span className="font-[400]"> - {transaction?.bankId?.iban}</span>
                               </p>
                             </div>
                           )}

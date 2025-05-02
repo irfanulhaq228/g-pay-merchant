@@ -1,0 +1,53 @@
+{
+  "name": "payment-gateway-merchant-side",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "lint": "eslint .",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "antd": "^5.22.2",
+    "axios": "^1.7.8",
+    "chart.js": "^4.4.7",
+    "date-fns": "^4.1.0",
+    "html2canvas": "^1.4.1",
+    "js-cookie": "^3.0.5",
+    "jspdf": "^2.5.2",
+    "jspdf-autotable": "^3.8.4",
+    "moment": "^2.30.1",
+    "moment-timezone": "^0.5.47",
+    "pdf-table-extractor": "^1.0.3",
+    "pdfjs-dist": "^4.9.155",
+    "react": "^18.3.1",
+    "react-chartjs-2": "^5.2.0",
+    "react-datepicker": "^7.6.0",
+    "react-dom": "^18.3.1",
+    "react-icons": "^5.3.0",
+    "react-loader-spinner": "^6.1.6",
+    "react-pdftotext": "^1.3.4",
+    "react-router-dom": "^7.0.1",
+    "socket.io-client": "^4.8.1",
+    "tabula-js": "^1.0.1",
+    "xlsx": "^0.18.5"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.13.0",
+    "@types/react": "^18.3.12",
+    "@types/react-dom": "^18.3.1",
+    "@vitejs/plugin-react": "^4.3.3",
+    "autoprefixer": "^10.4.20",
+    "eslint": "^9.13.0",
+    "eslint-plugin-react": "^7.37.2",
+    "eslint-plugin-react-hooks": "^5.0.0",
+    "eslint-plugin-react-refresh": "^0.4.14",
+    "globals": "^15.11.0",
+    "postcss": "^8.4.49",
+    "tailwindcss": "^3.4.15",
+    "vite": "^5.4.10",
+    "vite-plugin-static-copy": "^2.2.0"
+  }
+}

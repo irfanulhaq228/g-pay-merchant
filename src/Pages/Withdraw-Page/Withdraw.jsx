@@ -46,6 +46,8 @@ const Withdraw = ({ setSelectedPage, authorization, showSidebar }) => {
     const [newSelectedBank, setNewSelectedBank] = useState(null);
     const [items, setItems] = useState(Banks.map((bank) => bank.title));
     const [selectedTransaction, setSelectedTransaction] = useState(null);
+    const [qrCodeImage, setQrCodeImage] = useState(null);
+    const [qrCodePreview, setQrCodePreview] = useState(null);
 
     const [data, setData] = useState({
         image: null,
@@ -149,6 +151,15 @@ const Withdraw = ({ setSelectedPage, authorization, showSidebar }) => {
         setWithdrawModalOpen(true);
     };
 
+    const handleQrCodeChange = (e) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            setQrCodeImage(file);
+            const previewUrl = URL.createObjectURL(file);
+            setQrCodePreview(previewUrl);
+        }
+    };
+
     const handleWithdrawSubmit = async () => {
         if (withdrawAmount === "" || withdrawAmount == 0 || exchange === "") {
             return notification.error({
@@ -185,21 +196,37 @@ const Withdraw = ({ setSelectedPage, authorization, showSidebar }) => {
                 placement: "topRight",
             });
         }
+        if (exchangeData?.label === "USDT" && !qrCodeImage) {
+            return notification.error({
+                message: "Error",
+                description: "Please upload USDT QR code",
+                placement: "topRight",
+            });
+        }
         const data = {
             amount: ((parseFloat(withdrawAmount) - (parseFloat(exchangeData?.charges) * parseFloat(withdrawAmount)) / 100) / parseFloat(exchangeData?.rate)).toFixed(2),
-            withdrawBankId: exchange === "67c1e65de5d59894e5a19435" ? newSelectedBank : null,
             note: note,
             exchangeId: exchange,
             amountINR: withdrawAmount,
             merchantId: Cookies.get('merchantId')
         };
+        if (exchange === "67c1e65de5d59894e5a19435" && newSelectedBank) {
+            data.withdrawBankId = newSelectedBank;
+        }
         try {
             const token = Cookies.get("merchantToken");
             setDisableButton(true);
-            const response = await axios.post(`${BACKEND_URL}/withdraw/create`, data, {
+            const formData = new FormData();
+            Object.keys(data).forEach(key => {
+                formData.append(key, data[key]);
+            });
+            if (qrCodeImage) {
+                formData.append("image", qrCodeImage);
+            }
+            const response = await axios.post(`${BACKEND_URL}/withdraw/create`, formData, {
                 headers: {
                     Authorization: `Bearer ${token}`,
-                    "Content-Type": "application/json",
+                    "Content-Type": "multipart/form-data",
                 },
             });
             if (response?.status === 200) {
@@ -616,6 +643,29 @@ const Withdraw = ({ setSelectedPage, authorization, showSidebar }) => {
                                 value={newSelectedBank}
                                 options={banks}
                             />
+                        </div>
+                    )}
+                    {exchangeData?.label === "USDT" && (
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                                Upload QR Code
+                            </label>
+                            <input
+                                type="file"
+                                onChange={handleQrCodeChange}
+                                accept="image/*"
+                                className="mb-2"
+                            />
+                            {qrCodePreview && (
+                                <div className="mt-2">
+                                    <p className="text-gray-600 text-[12px] font-[600] mb-1">QR Code Preview:</p>
+                                    <img
+                                        src={qrCodePreview}
+                                        alt="QR Code Preview"
+                                        className="max-w-[200px] h-auto rounded-lg border"
+                                    />
+                                </div>
+                            )}
                         </div>
                     )}
                     <div>

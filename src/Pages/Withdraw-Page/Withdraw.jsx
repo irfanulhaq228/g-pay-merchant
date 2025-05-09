@@ -1059,11 +1059,91 @@ const Withdraw = ({ setSelectedPage, authorization, showSidebar }) => {
                                     />
                                 </div>
 
+                                {/* Portal Specific Fields */}
+                                {selectedTransaction?.exchangeId?._id === "67c20f130213c2d397da36c9" && (
+                                    <>
+                                        <div className="border-t mt-2 mb-1"></div>
+                                        <p className="font-[600] text-[14px] mb-2">Portal Details</p>
+
+                                        <div className="flex items-center gap-4">
+                                            <p className="text-[12px] font-[600] w-[200px]">Exchange Rate:</p>
+                                            <Input
+                                                className="text-[12px] bg-gray-200"
+                                                readOnly
+                                                value={`1 ${selectedTransaction?.exchangeId?.currency} = ${selectedTransaction?.exchangeId?.currencyRate} INR`}
+                                            />
+                                        </div>
+
+                                        <div className="flex items-center gap-4">
+                                            <p className="text-[12px] font-[600] w-[200px]">Exchange Charges:</p>
+                                            <Input
+                                                className="text-[12px] bg-gray-200"
+                                                readOnly
+                                                value={`${selectedTransaction?.exchangeId?.charges}%`}
+                                            />
+                                        </div>
+
+                                        <div className="flex items-center gap-4">
+                                            <p className="text-[12px] font-[600] w-[200px]">Amount in INR:</p>
+                                            <Input
+                                                className="text-[12px] bg-gray-200"
+                                                readOnly
+                                                value={`${selectedTransaction?.amountINR} INR`}
+                                            />
+                                        </div>
+
+                                        <div className="flex items-center gap-4">
+                                            <p className="text-[12px] font-[600] w-[200px]">Portal Name:</p>
+                                            <Input
+                                                className="text-[12px] bg-gray-200"
+                                                readOnly
+                                                value={selectedTransaction?.portalId?.portalName || selectedTransaction?.portalId?.name || 'N/A'}
+                                            />
+                                        </div>
+
+                                        <div className="flex items-center gap-4">
+                                            <p className="text-[12px] font-[600] w-[200px]">User Name:</p>
+                                            <Input
+                                                className="text-[12px] bg-gray-200"
+                                                readOnly
+                                                value={selectedTransaction?.customerName || 'N/A'}
+                                            />
+                                        </div>
+                                    </>
+                                )}
+
                                 {/* AED Specific Fields */}
                                 {(selectedTransaction?.exchangeId?.currency === "AED" || selectedTransaction?.exchangeId?.currency === "By Cash") && (
                                     <>
                                         <div className="border-t mt-2 mb-1"></div>
                                         <p className="font-[600] text-[14px] mb-2">{selectedTransaction?.exchangeId?.currency} Details</p>
+
+                                        <div className="flex items-center gap-4">
+                                            <p className="text-[12px] font-[600] w-[200px]">Exchange Rate:</p>
+                                            <Input
+                                                className="text-[12px] bg-gray-200"
+                                                readOnly
+                                                value={`1 ${selectedTransaction?.exchangeId?.currency} = ${selectedTransaction?.exchangeId?.currencyRate} INR`}
+                                            />
+                                        </div>
+
+                                        <div className="flex items-center gap-4">
+                                            <p className="text-[12px] font-[600] w-[200px]">Exchange Charges:</p>
+                                            <Input
+                                                className="text-[12px] bg-gray-200"
+                                                readOnly
+                                                value={`${selectedTransaction?.exchangeId?.charges}%`}
+                                            />
+                                        </div>
+
+                                        <div className="flex items-center gap-4">
+                                            <p className="text-[12px] font-[600] w-[200px]">Amount in INR:</p>
+                                            <Input
+                                                className="text-[12px] bg-gray-200"
+                                                readOnly
+                                                value={`${selectedTransaction?.amountINR} INR`}
+                                            />
+                                        </div>
 
                                         <div className="flex items-center gap-4">
                                             <p className="text-[12px] font-[600] w-[200px]">Location:</p>
@@ -1094,10 +1174,9 @@ const Withdraw = ({ setSelectedPage, authorization, showSidebar }) => {
 
                                         <div className="flex items-center gap-4">
                                             <p className="text-[12px] font-[600] w-[200px]">Token:</p>
-                                            <Input
-                                                className="text-[12px] bg-gray-200"
-                                                readOnly
-                                                value={selectedTransaction?.token || 'N/A'}
+                                            <div 
+                                                className="text-[12px] bg-gray-200 p-2 rounded w-full"
+                                                dangerouslySetInnerHTML={{ __html: selectedTransaction?.token || 'N/A' }}
                                             />
                                         </div>
                                     </>

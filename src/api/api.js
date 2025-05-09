@@ -997,4 +997,33 @@ export const fn_getAllLocations = async () => {
     }
 };
 
+//------------------------------------  Get All Portal API --------------------------------------
+export const fn_getAllPortals = async () => {
+    try {
+        const token = Cookies.get("merchantToken");
+        const response = await axios.get(
+            `${BACKEND_URL}/portal/getAll`,
+            {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    "Content-Type": "application/json",
+                },
+            }
+        );
+        return {
+            status: true,
+            data: response.data?.data || []
+        };
+    } catch (error) {
+        return {
+            status: false,
+            message: error?.response?.data?.message || "Failed to fetch portals"
+        };
+    }
+};
+
 export default BACKEND_URL;
+
+
+
+// location/get/id

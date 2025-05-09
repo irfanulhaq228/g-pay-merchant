@@ -152,6 +152,7 @@ Updated Date: ${moment.utc(item?.updatedAt)
                   <tr className="bg-[#ECF0FA] text-left text-[12px] text-gray-700">
                     <th className="p-4 whitespace-nowrap">S_ID</th>
                     <th className="p-4 whitespace-nowrap">Account Holder Name</th>
+                    <th className="p-4 whitespace-nowrap">Bank Name</th>
                     <th className="p-4 whitespace-nowrap">Account Number</th>
                     <th className="p-4 whitespace-nowrap">IFSC Number</th>
                     <th className="p-4 whitespace-nowrap">Amount</th>
@@ -167,6 +168,9 @@ Updated Date: ${moment.utc(item?.updatedAt)
                       </td>
                       <td className="p-4 text-[12px] font-[600] text-[#000000B2] whitespace-nowrap">
                         {item?.username}
+                      </td>
+                      <td className="p-4 text-[12px] font-[600] text-[#000000B2] whitespace-nowrap">
+                        {item?.account?.includes("@") ? "UPI" : item?.bankName || "-"}
                       </td>
                       <td className="p-4 text-[12px] font-[600] text-[#000000B2] whitespace-nowrap">
                         {item?.account}
@@ -278,7 +282,17 @@ Updated Date: ${moment.utc(item?.updatedAt)
 
                 {/* Account Number */}
                 <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4 w-full">
-                  <p className="text-[12px] font-[600] min-w-[120px] sm:w-[200px] text-nowrap">Bank Account:</p>
+                  <p className="text-[12px] font-[600] min-w-[120px] sm:w-[200px] text-nowrap">Bank Name:</p>
+                  <Input
+                    className="text-[12px] bg-gray-200 w-full"
+                    readOnly
+                    value={selectedWithdrawData?.account?.includes("@") ? "UPI" : selectedWithdrawData?.bankName || "-"}
+                  />
+                </div>
+
+                {/* Account Number */}
+                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4 w-full">
+                  <p className="text-[12px] font-[600] min-w-[120px] sm:w-[200px] text-nowrap">Account Number:</p>
                   <Input
                     className="text-[12px] bg-gray-200 w-full"
                     readOnly

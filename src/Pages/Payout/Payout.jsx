@@ -116,10 +116,10 @@ const Payout = ({ authorization, showSidebar }) => {
 
   const handleDownloadSample = () => {
     const sampleData = [
-      ["Account Holder Name", "Account Number", "IFSC Number", "Amount"],
-      ["Hafeez", "HBL -1234567890", "ABCD123456", 1000],
-      ["Irfan", "upi@irfan.com", "-", 2000],
-      ["Arbaz", "UBL-8842492", "7472784", 1500],
+      ["Account Holder Name", "Bank Name", "Account Number", "IFSC Number", "Amount"],
+      ["Hafeez", "HBL", "1234567890", "ABCD123456", 1000],
+      ["Irfan", "UPI", "upi@irfan.com", "-", 2000],
+      ["Arbaz", "UBL", "8842492", "7472784", 1500],
     ];
     const worksheet = XLSX.utils.aoa_to_sheet(sampleData);
     const workbook = XLSX.utils.book_new();

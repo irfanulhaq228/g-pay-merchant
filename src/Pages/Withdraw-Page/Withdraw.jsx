@@ -10,7 +10,7 @@ import PhoneInput from 'react-phone-input-2';
 import 'react-phone-input-2/lib/style.css';
 
 import { Banks } from "../../json-data/banks";
-import BACKEND_URL, { fn_getBankByAccountTypeApi, fn_getAllBankNames, fn_getAllLocations } from "../../api/api";
+import BACKEND_URL, { fn_getBankByAccountTypeApi, fn_getAllBankNames, fn_getAllLocations, fn_getAllPortals } from "../../api/api";
 
 import { FiEye } from "react-icons/fi";
 import { TiPlusOutline } from "react-icons/ti";
@@ -46,6 +46,7 @@ const Withdraw = ({ setSelectedPage, authorization, showSidebar }) => {
     const [merchantWallet, setMerchantWallet] = useState({});
     const [disableButton, setDisableButton] = useState(false);
     const [newSelectedBank, setNewSelectedBank] = useState(null);
+    const [selectedPortal, setSelectedPortal] = useState(null);
     const [items, setItems] = useState(Banks.map((bank) => bank.title));
     const [selectedTransaction, setSelectedTransaction] = useState(null);
     const [qrCodeImage, setQrCodeImage] = useState(null);
@@ -56,15 +57,8 @@ const Withdraw = ({ setSelectedPage, authorization, showSidebar }) => {
     const [contactNumber, setContactNumber] = useState('');
     const [token, setToken] = useState('');
     const [locations, setLocations] = useState([]);
+    const [portals, setPortals] = useState([]);
 
-    // Add static locations for AED
-    const aedLocations = [
-        { value: 'dubai', label: 'Dubai' },
-        { value: 'abu_dhabi', label: 'Abu Dhabi' },
-        { value: 'sharjah', label: 'Sharjah' },
-        { value: 'ajman', label: 'Ajman' },
-        { value: 'ras_al_khaimah', label: 'Ras Al Khaimah' }
-    ];
 
     const [data, setData] = useState({
         image: null,
@@ -86,6 +80,7 @@ const Withdraw = ({ setSelectedPage, authorization, showSidebar }) => {
         fn_getExchanges();
         fn_getWithdraws();
         fn_merchantWallet();
+        fetchPortals();
     }, []);
 
     useEffect(() => {
@@ -233,6 +228,13 @@ const Withdraw = ({ setSelectedPage, authorization, showSidebar }) => {
                 placement: "topRight",
             });
         }
+        if (exchangeData?.label === "Portal" && !selectedPortal) {
+            return notification.error({
+                message: "Error",
+                description: "Please select portal",
+                placement: "topRight",
+            });
+        }
         // Add validation for AED fields
         if (exchangeData?.label === "AED" || exchangeData?.label === "By Cash") {
             if (!location) {
@@ -284,6 +286,11 @@ const Withdraw = ({ setSelectedPage, authorization, showSidebar }) => {
         if (exchange === "67c1e65de5d59894e5a19435" && newSelectedBank) {
             data.withdrawBankId = newSelectedBank;
         }
+
+        if (exchangeData?.label === "Portal") {
+            data.portalId = selectedPortal;
+        }
+
         try {
             const token = Cookies.get("merchantToken");
             setDisableButton(true);
@@ -311,6 +318,7 @@ const Withdraw = ({ setSelectedPage, authorization, showSidebar }) => {
                 setName('');
                 setContactNumber('');
                 setToken('');
+                setSelectedPortal(null);
                 notification.success({
                     message: "Success",
                     description: "Withdraw Request Created!",
@@ -544,6 +552,17 @@ const Withdraw = ({ setSelectedPage, authorization, showSidebar }) => {
         }
     }, [open]);
 
+    // Add fetchPortals function
+    const fetchPortals = async () => {
+        const response = await fn_getAllPortals();
+        if (response.status) {
+            setPortals(response.data.map(portal => ({
+                value: portal._id,
+                label: portal.portalName || portal.name
+            })));
+        }
+    };
+
     return (
         <>
             <div
@@ -760,6 +779,20 @@ const Withdraw = ({ setSelectedPage, authorization, showSidebar }) => {
                                     />
                                 </div>
                             )}
+                        </div>
+                    )}
+                    {exchangeData?.label === "Portal" && (
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                                Select Portal
+                            </label>
+                            <Select
+                                style={{ width: '100%' }}
+                                placeholder="Select Portal"
+                                onChange={(value) => setSelectedPortal(value)}
+                                value={selectedPortal}
+                                options={portals}
+                            />
                         </div>
                     )}
                     {/* Add AED specific fields */}
@@ -1131,6 +1164,19 @@ const Withdraw = ({ setSelectedPage, authorization, showSidebar }) => {
                                                 />
                                             </div>
                                         )}
+                                    </>
+                                )}
+
+                                {selectedTransaction?.exchangeId?._id === "67c1caa1fd672c91b4a7679f" && (
+                                    <>
+                                        <div className="border-t mt-2 mb-1"></div>
+                                        <p className="font-[600] text-[14px] mb-2">QR Code</p>
+
+                                        <img 
+                                            src={`${BACKEND_URL}/${selectedTransaction?.image}`}
+                                            alt="QR Code" 
+                                            width={200} 
+                                        />
                                     </>
                                 )}
 

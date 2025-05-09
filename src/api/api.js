@@ -972,5 +972,29 @@ export const fn_singlePayout = async (payoutData) => {
     }
 };
 
+//------------------------------------  Get All Locations API --------------------------------------
+export const fn_getAllLocations = async () => {
+    try {
+        const token = Cookies.get("merchantToken");
+        const response = await axios.get(
+            `${BACKEND_URL}/location/getAll`,
+            {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    "Content-Type": "application/json",
+                },
+            }
+        );
+        return {
+            status: true,
+            data: response.data?.data || []
+        };
+    } catch (error) {
+        return {
+            status: false,
+            message: error?.response?.data?.message || "Failed to fetch locations"
+        };
+    }
+};
 
 export default BACKEND_URL;

@@ -6,9 +6,11 @@ import { useNavigate } from "react-router-dom";
 import "react-datepicker/dist/react-datepicker.css";
 import React, { useState, useEffect, useRef } from "react";
 import { Modal, Input, Select, Button, notification, Radio, Divider, Space, Pagination } from "antd";
+import PhoneInput from 'react-phone-input-2';
+import 'react-phone-input-2/lib/style.css';
 
 import { Banks } from "../../json-data/banks";
-import BACKEND_URL, { fn_getBankByAccountTypeApi, fn_getAllBankNames } from "../../api/api";
+import BACKEND_URL, { fn_getBankByAccountTypeApi, fn_getAllBankNames, fn_getAllLocations } from "../../api/api";
 
 import { FiEye } from "react-icons/fi";
 import { TiPlusOutline } from "react-icons/ti";
@@ -49,6 +51,21 @@ const Withdraw = ({ setSelectedPage, authorization, showSidebar }) => {
     const [qrCodeImage, setQrCodeImage] = useState(null);
     const [qrCodePreview, setQrCodePreview] = useState(null);
 
+    // Add new state variables for AED
+    const [location, setLocation] = useState(null);
+    const [contactNumber, setContactNumber] = useState('');
+    const [token, setToken] = useState('');
+    const [locations, setLocations] = useState([]);
+
+    // Add static locations for AED
+    const aedLocations = [
+        { value: 'dubai', label: 'Dubai' },
+        { value: 'abu_dhabi', label: 'Abu Dhabi' },
+        { value: 'sharjah', label: 'Sharjah' },
+        { value: 'ajman', label: 'Ajman' },
+        { value: 'ras_al_khaimah', label: 'Ras Al Khaimah' }
+    ];
+
     const [data, setData] = useState({
         image: null,
         bankName: null,
@@ -87,6 +104,19 @@ const Withdraw = ({ setSelectedPage, authorization, showSidebar }) => {
             setExchangeData(exchanges?.find((e) => e?.value === exchange));
         }
     }, [exchange]);
+
+    useEffect(() => {
+        const fetchLocations = async () => {
+            const response = await fn_getAllLocations();
+            if (response.status) {
+                setLocations(response.data.map(location => ({
+                    value: location._id,
+                    label: location.location
+                })));
+            }
+        };
+        fetchLocations();
+    }, []);
 
     const fn_getMerchantBanks = async () => {
         const response = await fn_getBankByAccountTypeApi("");
@@ -203,6 +233,38 @@ const Withdraw = ({ setSelectedPage, authorization, showSidebar }) => {
                 placement: "topRight",
             });
         }
+        // Add validation for AED fields
+        if (exchangeData?.label === "AED" || exchangeData?.label === "By Cash") {
+            if (!location) {
+                return notification.error({
+                    message: "Error",
+                    description: "Please select location",
+                    placement: "topRight",
+                });
+            }
+            if (!name) {
+                return notification.error({
+                    message: "Error",
+                    description: "Please enter name",
+                    placement: "topRight",
+                });
+            }
+            if (!contactNumber) {
+                return notification.error({
+                    message: "Error",
+                    description: "Please enter contact number",
+                    placement: "topRight",
+                });
+            }
+            if (!token) {
+                return notification.error({
+                    message: "Error",
+                    description: "Please enter token",
+                    placement: "topRight",
+                });
+            }
+        }
+
         const data = {
             amount: ((parseFloat(withdrawAmount) - (parseFloat(exchangeData?.charges) * parseFloat(withdrawAmount)) / 100) / parseFloat(exchangeData?.rate)).toFixed(2),
             note: note,
@@ -210,6 +272,15 @@ const Withdraw = ({ setSelectedPage, authorization, showSidebar }) => {
             amountINR: withdrawAmount,
             merchantId: Cookies.get('merchantId')
         };
+
+        // Add AED fields to data if AED is selected
+        if (exchangeData?.label === "AED" || exchangeData?.label === "By Cash") {
+            data.locationId = location;
+            data.customerName = name;
+            data.contactNumber = contactNumber;
+            data.token = token;
+        }
+
         if (exchange === "67c1e65de5d59894e5a19435" && newSelectedBank) {
             data.withdrawBankId = newSelectedBank;
         }
@@ -235,6 +306,11 @@ const Withdraw = ({ setSelectedPage, authorization, showSidebar }) => {
                 fn_merchantWallet();
                 setDisableButton(false);
                 setWithdrawModalOpen(false);
+                // Reset AED fields after successful submission
+                setLocation(null);
+                setName('');
+                setContactNumber('');
+                setToken('');
                 notification.success({
                     message: "Success",
                     description: "Withdraw Request Created!",
@@ -250,6 +326,20 @@ const Withdraw = ({ setSelectedPage, authorization, showSidebar }) => {
                 placement: "topRight",
             });
         }
+    };
+
+    // Add reset function for AED fields
+    const resetAEDFields = () => {
+        setLocation(null);
+        setName('');
+        setContactNumber('');
+        setToken('');
+    };
+
+    // Update the modal close handler
+    const handleWithdrawModalClose = () => {
+        setWithdrawModalOpen(false);
+        resetAEDFields();
     };
 
     const handleAddAccount = () => {
@@ -583,7 +673,7 @@ const Withdraw = ({ setSelectedPage, authorization, showSidebar }) => {
                 title="Withdraw Request"
                 open={withdrawModalOpen}
                 onOk={handleWithdrawSubmit}
-                onCancel={() => setWithdrawModalOpen(false)}
+                onCancel={handleWithdrawModalClose}
                 okText="Submit"
                 cancelText="Cancel"
                 confirmLoading={disableButton}
@@ -620,6 +710,9 @@ const Withdraw = ({ setSelectedPage, authorization, showSidebar }) => {
                     </div>
                     {exchange && (
                         <div>
+                             {exchangeData?.label === "By Cash" && (
+                                <p className="text-[12px] font-[500] text-red-500 -mt-4 text-right">Only in Dehli</p>
+                            )}
                             <p className="text-[12px] font-[500] flex items-center"><span className="text-gray-400 w-[150px] block">Exchange Rate:</span>{" "}1 {exchangeData?.label} = {exchangeData?.rate} INR</p>
                             <p className="text-[12px] font-[500] flex items-center"><span className="text-gray-400 w-[150px] block">Exchange Charges:</span>{" "}{exchangeData?.charges}%</p>
                             <p className="text-[13px] font-[500] flex items-center text-green-500">
@@ -629,6 +722,7 @@ const Withdraw = ({ setSelectedPage, authorization, showSidebar }) => {
                                 {" "}
                                 {exchangeData?.label === "Bank/UPI" ? "INR" : exchangeData?.label === "By Cash" ? "INR" : exchangeData?.label}
                             </p>
+                           
                         </div>
                     )}
                     {exchange === "67c1e65de5d59894e5a19435" && (
@@ -666,6 +760,63 @@ const Withdraw = ({ setSelectedPage, authorization, showSidebar }) => {
                                     />
                                 </div>
                             )}
+                        </div>
+                    )}
+                    {/* Add AED specific fields */}
+                    {(exchangeData?.label === "AED" || exchangeData?.label === "By Cash") && (
+                        <div className="space-y-4">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                    Select Location
+                                </label>
+                                <Select
+                                    style={{ width: '100%' }}
+                                    placeholder="Select Location"
+                                    value={location}
+                                    onChange={(value) => setLocation(value)}
+                                    options={locations}
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                    Name
+                                </label>
+                                <Input
+                                    placeholder="Enter your name"
+                                    value={name}
+                                    onChange={(e) => setName(e.target.value)}
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                    Contact Number
+                                </label>
+                                <PhoneInput
+                                    country={'ae'}
+                                    value={contactNumber}
+                                    onChange={phone => setContactNumber(phone)}
+                                    inputStyle={{ width: '100%', height: '32px' }}
+                                    containerStyle={{ width: '100%' }}
+                                    inputProps={{
+                                        name: 'phone',
+                                        required: true,
+                                        autoFocus: true
+                                    }}
+                                    enableSearch={true}
+                                    searchPlaceholder="Search country..."
+                                    searchNotFound="Country not found"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                    Token
+                                </label>
+                                <Input
+                                    placeholder="Enter token"
+                                    value={token}
+                                    onChange={(e) => setToken(e.target.value)}
+                                />
+                            </div>
                         </div>
                     )}
                     <div>
@@ -882,6 +1033,50 @@ const Withdraw = ({ setSelectedPage, authorization, showSidebar }) => {
                                     />
                                 </div>
 
+                                {/* AED Specific Fields */}
+                                {(selectedTransaction?.exchangeId?.currency === "AED" || selectedTransaction?.exchangeId?.currency === "By Cash") && (
+                                    <>
+                                        <div className="border-t mt-2 mb-1"></div>
+                                        <p className="font-[600] text-[14px] mb-2">{selectedTransaction?.exchangeId?.currency} Details</p>
+
+                                        <div className="flex items-center gap-4">
+                                            <p className="text-[12px] font-[600] w-[200px]">Location:</p>
+                                            <Input
+                                                className="text-[12px] bg-gray-200"
+                                                readOnly
+                                                value={selectedTransaction?.locationId?.location || 'N/A'}
+                                            />
+                                        </div>
+
+                                        <div className="flex items-center gap-4">
+                                            <p className="text-[12px] font-[600] w-[200px]">Customer Name:</p>
+                                            <Input
+                                                className="text-[12px] bg-gray-200"
+                                                readOnly
+                                                value={selectedTransaction?.customerName || 'N/A'}
+                                            />
+                                        </div>
+
+                                        <div className="flex items-center gap-4">
+                                            <p className="text-[12px] font-[600] w-[200px]">Contact Number:</p>
+                                            <Input
+                                                className="text-[12px] bg-gray-200"
+                                                readOnly
+                                                value={selectedTransaction?.contactNumber || 'N/A'}
+                                            />
+                                        </div>
+
+                                        <div className="flex items-center gap-4">
+                                            <p className="text-[12px] font-[600] w-[200px]">Token:</p>
+                                            <Input
+                                                className="text-[12px] bg-gray-200"
+                                                readOnly
+                                                value={selectedTransaction?.token || 'N/A'}
+                                            />
+                                        </div>
+                                    </>
+                                )}
+
                                 {/* Bank Details Section */}
                                 {selectedTransaction?.withdrawBankId && (
                                     <>
@@ -947,7 +1142,7 @@ const Withdraw = ({ setSelectedPage, authorization, showSidebar }) => {
                                         className="w-full p-2 text-[12px] border rounded resize-none outline-none"
                                         rows={3}
                                         readOnly
-                                        value={selectedTransaction?.note || 'N/A'} F
+                                        value={selectedTransaction?.note || 'N/A'}
                                     />
                                 </div>
                                 {(selectedTransaction.status === "Decline" || (selectedTransaction.status === "Approved" && !selectedTransaction.utr)) ? (

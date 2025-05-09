@@ -1,19 +1,21 @@
 import axios from "axios";
 import Cookies from "js-cookie";
 import moment from "moment/moment";
+import ReactQuill from "react-quill";
+import PhoneInput from 'react-phone-input-2';
 import TextArea from "antd/es/input/TextArea";
 import { useNavigate } from "react-router-dom";
 import "react-datepicker/dist/react-datepicker.css";
 import React, { useState, useEffect, useRef } from "react";
-import { Modal, Input, Select, Button, notification, Radio, Divider, Space, Pagination } from "antd";
-import PhoneInput from 'react-phone-input-2';
+import { Modal, Input, Select, Button, notification, Radio, Pagination } from "antd";
+
+import 'react-quill/dist/quill.snow.css';
 import 'react-phone-input-2/lib/style.css';
 
 import { Banks } from "../../json-data/banks";
-import BACKEND_URL, { fn_getBankByAccountTypeApi, fn_getAllBankNames, fn_getAllLocations, fn_getAllPortals } from "../../api/api";
+import BACKEND_URL, { fn_getBankByAccountTypeApi, fn_getAllBankNames, fn_getAllLocations, fn_getAllPortals, fn_getAllLocationsById } from "../../api/api";
 
 import { FiEye } from "react-icons/fi";
-import { TiPlusOutline } from "react-icons/ti";
 import { FaIndianRupeeSign } from "react-icons/fa6";
 import { FaExclamationCircle } from "react-icons/fa";
 
@@ -32,6 +34,7 @@ const Withdraw = ({ setSelectedPage, authorization, showSidebar }) => {
     const [name, setName] = useState(null);
     const [open, setOpen] = useState(false);
     const [image, setImage] = useState(null);
+    const [portal, setPortal] = useState(null);
     const [loading, setLoading] = useState(true);
     const [newOpen, setNewOpen] = useState(false);
     const [exchange, setExchange] = useState(null);
@@ -100,18 +103,15 @@ const Withdraw = ({ setSelectedPage, authorization, showSidebar }) => {
         }
     }, [exchange]);
 
-    useEffect(() => {
-        const fetchLocations = async () => {
-            const response = await fn_getAllLocations();
-            if (response.status) {
-                setLocations(response.data.map(location => ({
-                    value: location._id,
-                    label: location.location
-                })));
-            }
-        };
-        fetchLocations();
-    }, []);
+    const fetchLocations = async (id) => {
+        const response = await fn_getAllLocationsById(id);
+        if (response.status) {
+            setLocations(response.data.map(location => ({
+                value: location._id,
+                label: location.location
+            })));
+        }
+    };
 
     const fn_getMerchantBanks = async () => {
         const response = await fn_getBankByAccountTypeApi("");
@@ -186,121 +186,93 @@ const Withdraw = ({ setSelectedPage, authorization, showSidebar }) => {
     };
 
     const handleWithdrawSubmit = async () => {
-        if (withdrawAmount === "" || withdrawAmount == 0 || exchange === "") {
+        if (!withdrawAmount || !exchange) {
             return notification.error({
                 message: "Error",
-                description: "Enter Amount to Withdraw",
+                description: "Please fill all required fields",
                 placement: "topRight",
             });
-        }
-        if (!exchange) {
-            return notification.error({
-                message: "Error",
-                description: "Select Exchange",
-                placement: "topRight",
-            });
-        }
-        if (exchange === "67c1e65de5d59894e5a19435" && banks?.length === 0) {
-            return notification.error({
-                message: "Error",
-                description: "First Add Bank",
-                placement: "topRight",
-            });
-        }
+        };
+
         if (exchange === "67c1e65de5d59894e5a19435" && !newSelectedBank) {
             return notification.error({
                 message: "Error",
-                description: "Select Bank",
+                description: "Please Select Bank",
                 placement: "topRight",
             });
-        }
+        };
+
         if (merchantWallet?.pendingAmount < parseFloat(withdrawAmount)) {
             return notification.error({
                 message: "Error",
                 description: "Not Enough Balance",
                 placement: "topRight",
             });
-        }
+        };
+
         if (exchangeData?.label === "USDT" && !qrCodeImage) {
             return notification.error({
                 message: "Error",
                 description: "Please upload USDT QR code",
                 placement: "topRight",
             });
-        }
-        if (exchangeData?.label === "Portal" && !selectedPortal) {
-            return notification.error({
-                message: "Error",
-                description: "Please select portal",
-                placement: "topRight",
-            });
-        }
-        // Add validation for AED fields
-        if (exchangeData?.label === "AED" || exchangeData?.label === "By Cash") {
-            if (!location) {
-                return notification.error({
-                    message: "Error",
-                    description: "Please select location",
-                    placement: "topRight",
-                });
-            }
-            if (!name) {
-                return notification.error({
-                    message: "Error",
-                    description: "Please enter name",
-                    placement: "topRight",
-                });
-            }
-            if (!contactNumber) {
-                return notification.error({
-                    message: "Error",
-                    description: "Please enter contact number",
-                    placement: "topRight",
-                });
-            }
-            if (!token) {
-                return notification.error({
-                    message: "Error",
-                    description: "Please enter token",
-                    placement: "topRight",
-                });
-            }
-        }
-
-        const data = {
-            amount: ((parseFloat(withdrawAmount) - (parseFloat(exchangeData?.charges) * parseFloat(withdrawAmount)) / 100) / parseFloat(exchangeData?.rate)).toFixed(2),
-            note: note,
-            exchangeId: exchange,
-            amountINR: withdrawAmount,
-            merchantId: Cookies.get('merchantId')
         };
 
-        // Add AED fields to data if AED is selected
         if (exchangeData?.label === "AED" || exchangeData?.label === "By Cash") {
-            data.locationId = location;
-            data.customerName = name;
-            data.contactNumber = contactNumber;
-            data.token = token;
-        }
-
-        if (exchange === "67c1e65de5d59894e5a19435" && newSelectedBank) {
-            data.withdrawBankId = newSelectedBank;
-        }
+            if (location === null || name === "" || contactNumber === "" || token === "") {
+                return notification.error({
+                    message: "Error",
+                    description: "Please Fill all Fields",
+                    placement: "topRight",
+                });
+            };
+        };
 
         if (exchangeData?.label === "Portal") {
-            data.portalId = selectedPortal;
+            if (portal === null || name === "") {
+                return notification.error({
+                    message: "Error",
+                    description: "Please Fill all Fields",
+                    placement: "topRight",
+                });
+            };
+        };
+
+        const formData = new FormData();
+
+        formData.append("note", note || "");
+        formData.append("exchangeId", exchange);
+        formData.append("amountINR", withdrawAmount);
+        formData.append("merchantId",  Cookies.get('merchantId'));
+        formData.append("amount", ((parseFloat(withdrawAmount) - (parseFloat(exchangeData?.charges) * parseFloat(withdrawAmount)) / 100) / parseFloat(exchangeData?.rate)).toFixed(2));
+
+        // for bank
+        if (exchange === "67c1e65de5d59894e5a19435" && newSelectedBank) {
+            formData.append("withdrawBankId", newSelectedBank);
         }
+
+        // for USDT
+        if (exchangeData?.label === "USDT" && qrCodeImage) {
+            formData.append("image", qrCodeImage);
+        };
+
+        // for Cash / AED
+        if ((exchangeData?.label === "AED" || exchangeData?.label === "By Cash")) {
+            formData.append("locationId", location);
+            formData.append("customerName", name);
+            formData.append("contactNumber", contactNumber);
+            formData.append("token", token);
+        };
+
+        // for Portal
+        if (exchangeData?.label === "Portal") {
+            formData.append("portalId", portal);
+            formData.append("customerName", name);
+        };
 
         try {
             const token = Cookies.get("merchantToken");
             setDisableButton(true);
-            const formData = new FormData();
-            Object.keys(data).forEach(key => {
-                formData.append(key, data[key]);
-            });
-            if (qrCodeImage) {
-                formData.append("image", qrCodeImage);
-            }
             const response = await axios.post(`${BACKEND_URL}/withdraw/create`, formData, {
                 headers: {
                     Authorization: `Bearer ${token}`,
@@ -313,12 +285,12 @@ const Withdraw = ({ setSelectedPage, authorization, showSidebar }) => {
                 fn_merchantWallet();
                 setDisableButton(false);
                 setWithdrawModalOpen(false);
-                // Reset AED fields after successful submission
                 setLocation(null);
                 setName('');
                 setContactNumber('');
                 setToken('');
                 setSelectedPortal(null);
+                setQrCodeImage(null);
                 notification.success({
                     message: "Success",
                     description: "Withdraw Request Created!",
@@ -336,7 +308,6 @@ const Withdraw = ({ setSelectedPage, authorization, showSidebar }) => {
         }
     };
 
-    // Add reset function for AED fields
     const resetAEDFields = () => {
         setLocation(null);
         setName('');
@@ -344,7 +315,6 @@ const Withdraw = ({ setSelectedPage, authorization, showSidebar }) => {
         setToken('');
     };
 
-    // Update the modal close handler
     const handleWithdrawModalClose = () => {
         setWithdrawModalOpen(false);
         resetAEDFields();
@@ -576,14 +546,14 @@ const Withdraw = ({ setSelectedPage, authorization, showSidebar }) => {
                             <div className="text-[12px] w-full sm:w-auto text-center sm:text-left">
                                 <p className="text-gray-600">Withdraw Amount:</p>
                                 <p className="text-green-500 font-[500]">
-                                    <FaIndianRupeeSign className="inline-block mt-[-1px]" /> 
+                                    <FaIndianRupeeSign className="inline-block mt-[-1px]" />
                                     {merchantWallet?.approvedWithdraw || 0}
                                 </p>
                             </div>
                             <div className="text-[12px] w-full sm:w-auto text-center sm:text-left">
                                 <p className="text-gray-600">Pending Withdrawal:</p>
                                 <p className="text-yellow-500 font-[500]">
-                                    <FaIndianRupeeSign className="inline-block mt-[-1px]" /> 
+                                    <FaIndianRupeeSign className="inline-block mt-[-1px]" />
                                     {merchantWallet?.withdrawAmounts || 0}
                                 </p>
                             </div>
@@ -604,15 +574,15 @@ const Withdraw = ({ setSelectedPage, authorization, showSidebar }) => {
                                 </p>
                             </div>
                             <div className="flex flex-col sm:flex-row w-full sm:w-auto items-center gap-[10px]">
-                                <Button 
-                                    type="primary" 
+                                <Button
+                                    type="primary"
                                     onClick={handleAddAccount}
                                     className="w-full sm:w-auto"
                                 >
                                     Add Bank Account
                                 </Button>
-                                <Button 
-                                    type="primary" 
+                                <Button
+                                    type="primary"
                                     onClick={handleWithdrawRequest}
                                     className="w-full sm:w-auto"
                                 >
@@ -642,7 +612,10 @@ const Withdraw = ({ setSelectedPage, authorization, showSidebar }) => {
                                             <td className="p-4 text-[13px] font-[600] text-[#000000B2] whitespace-nowrap">
                                                 {moment.utc(transaction?.createdAt).format('DD MMM YYYY, hh:mm A')}
                                             </td>
-                                            <td className="p-4 text-[13px] font-[700] text-[#000000B2] text-nowrap">{transaction?.amountINR} {transaction?.exchangeId?._id === "67c1cb2ffd672c91b4a769b2" ? "INR" : transaction?.exchangeId?._id === "67c1e65de5d59894e5a19435" ? "INR" : transaction?.exchangeId?.currency}</td>
+                                            <td className="p-4 text-[13px] font-[700] text-[#000000B2] text-nowrap">
+                                                {/* {transaction?.amountINR} {transaction?.exchangeId?._id === "67c1cb2ffd672c91b4a769b2" ? "INR" : transaction?.exchangeId?._id === "67c1e65de5d59894e5a19435" ? "INR" : transaction?.exchangeId?.currency} */}
+                                                {transaction?.amountINR} INR
+                                            </td>
                                             <td className="p-4 text-[13px] font-[700] text-[#000000B2] text-nowrap">{transaction?.amount} {transaction?.exchangeId?._id === "67c1cb2ffd672c91b4a769b2" ? "INR" : transaction?.exchangeId?._id === "67c1e65de5d59894e5a19435" ? "INR" : transaction?.exchangeId?.currency}</td>
                                             <td className="p-4 text-[13px] font-[700] text-[#000000B2] text-nowrap">{transaction?.exchangeId?.currency}</td>
                                             <td className="p-4 text-[13px] font-[700] text-[#000000B2]">{(transaction?.utr && transaction?.utr !== "") ? transaction?.utr : "-"}</td>
@@ -688,7 +661,9 @@ const Withdraw = ({ setSelectedPage, authorization, showSidebar }) => {
                 </div>
             </div >
 
+            {/* Withdraw Request Modal */}
             <Modal
+                width={600}
                 title="Withdraw Request"
                 open={withdrawModalOpen}
                 onOk={handleWithdrawSubmit}
@@ -715,6 +690,7 @@ const Withdraw = ({ setSelectedPage, authorization, showSidebar }) => {
                             </span>
                         </p>
                     </div>
+
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">
                             Exchange
@@ -723,15 +699,16 @@ const Withdraw = ({ setSelectedPage, authorization, showSidebar }) => {
                             style={{ width: '100%' }}
                             placeholder="Select Exchange"
                             value={exchange}
-                            onChange={(e) => setExchange(e)}
+                            onChange={(e) => {setExchange(e); fetchLocations(e)}}
                             options={exchanges}
                         />
+                        {exchangeData?.label === "By Cash" && (
+                            <p className="text-[10px] text-red-600 font-[500]">Note: Only in Dehli</p>
+                        )}
                     </div>
+
                     {exchange && (
                         <div>
-                             {exchangeData?.label === "By Cash" && (
-                                <p className="text-[12px] font-[500] text-red-500 -mt-4 text-right">Only in Dehli</p>
-                            )}
                             <p className="text-[12px] font-[500] flex items-center"><span className="text-gray-400 w-[150px] block">Exchange Rate:</span>{" "}1 {exchangeData?.label} = {exchangeData?.rate} INR</p>
                             <p className="text-[12px] font-[500] flex items-center"><span className="text-gray-400 w-[150px] block">Exchange Charges:</span>{" "}{exchangeData?.charges}%</p>
                             <p className="text-[13px] font-[500] flex items-center text-green-500">
@@ -741,9 +718,9 @@ const Withdraw = ({ setSelectedPage, authorization, showSidebar }) => {
                                 {" "}
                                 {exchangeData?.label === "Bank/UPI" ? "INR" : exchangeData?.label === "By Cash" ? "INR" : exchangeData?.label}
                             </p>
-                           
                         </div>
                     )}
+
                     {exchange === "67c1e65de5d59894e5a19435" && (
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -755,9 +732,13 @@ const Withdraw = ({ setSelectedPage, authorization, showSidebar }) => {
                                 onChange={(value) => setNewSelectedBank(value)}
                                 value={newSelectedBank}
                                 options={banks}
+                                loading={!banks.length}
+                                showSearch
+                                filterOption={(input, option) => option?.label.toLowerCase().includes(input.toLowerCase())}
                             />
                         </div>
                     )}
+
                     {exchangeData?.label === "USDT" && (
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -781,21 +762,7 @@ const Withdraw = ({ setSelectedPage, authorization, showSidebar }) => {
                             )}
                         </div>
                     )}
-                    {exchangeData?.label === "Portal" && (
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
-                                Select Portal
-                            </label>
-                            <Select
-                                style={{ width: '100%' }}
-                                placeholder="Select Portal"
-                                onChange={(value) => setSelectedPortal(value)}
-                                value={selectedPortal}
-                                options={portals}
-                            />
-                        </div>
-                    )}
-                    {/* Add AED specific fields */}
+
                     {(exchangeData?.label === "AED" || exchangeData?.label === "By Cash") && (
                         <div className="space-y-4">
                             <div>
@@ -825,7 +792,7 @@ const Withdraw = ({ setSelectedPage, authorization, showSidebar }) => {
                                     Contact Number
                                 </label>
                                 <PhoneInput
-                                    country={'ae'}
+                                    country={'in'}
                                     value={contactNumber}
                                     onChange={phone => setContactNumber(phone)}
                                     inputStyle={{ width: '100%', height: '32px' }}
@@ -841,17 +808,43 @@ const Withdraw = ({ setSelectedPage, authorization, showSidebar }) => {
                                 />
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">
-                                    Token
-                                </label>
-                                <Input
-                                    placeholder="Enter token"
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Token</label>
+                                <ReactQuill
                                     value={token}
-                                    onChange={(e) => setToken(e.target.value)}
+                                    onChange={setToken}
+                                    theme="snow"
                                 />
                             </div>
                         </div>
                     )}
+
+                    {exchange === "67c20f130213c2d397da36c9" && (
+                        <div className="space-y-4">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                    Select Portal Name
+                                </label>
+                                <Select
+                                    style={{ width: '100%' }}
+                                    placeholder="Select Portal Name"
+                                    value={portal}
+                                    onChange={(value) => setPortal(value)}
+                                    options={portals}
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                    User Name
+                                </label>
+                                <Input
+                                    placeholder="Enter username"
+                                    value={name}
+                                    onChange={(e) => setName(e.target.value)}
+                                />
+                            </div>
+                        </div>
+                    )}
+
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">
                             Note
@@ -1172,10 +1165,10 @@ const Withdraw = ({ setSelectedPage, authorization, showSidebar }) => {
                                         <div className="border-t mt-2 mb-1"></div>
                                         <p className="font-[600] text-[14px] mb-2">QR Code</p>
 
-                                        <img 
+                                        <img
                                             src={`${BACKEND_URL}/${selectedTransaction?.image}`}
-                                            alt="QR Code" 
-                                            width={200} 
+                                            alt="QR Code"
+                                            width={200}
                                         />
                                     </>
                                 )}

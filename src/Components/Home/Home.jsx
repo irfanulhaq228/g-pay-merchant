@@ -383,7 +383,7 @@ const Home = ({ setSelectedPage, authorization, showSidebar, loginType, permissi
             <h2 className="text-[13px] uppercase font-[500]">AVAILABLE BALANCE</h2>
             <p className="mt-[13px] text-[20px] font-[700]">₹ {Number(availableWithdraw).toFixed(2)}</p>
             <p className="pt-[3px] text-[13px] font-[500] mb-[7px]">
-              Approved Transactions: <span className="font-[700]">{verifiedTransactions}</span>
+              Approved Transactions: <span className="font-[700]">₹ {verifiedTransactions}</span>
             </p>
           </div>
           <div
@@ -465,7 +465,8 @@ const Home = ({ setSelectedPage, authorization, showSidebar, loginType, permissi
               (loginType === "staff" && permissionsData?.merchantProfile)) && (
                 <>
                   {loading ? (
-                    <p>Loading...</p>
+                                  <p className="text-center py-4">Loading...</p>
+
                   ) : error ? (
                     <div className="flex items-center space-x-2 mt-2 text-gray-500">
                       <FaCircleExclamation className="text-gray-500" />
@@ -484,7 +485,9 @@ const Home = ({ setSelectedPage, authorization, showSidebar, loginType, permissi
                           />
                         ))
                       ) : (
-                        <p>No transactions found.</p>
+                        <p className="text-center py-4 text-gray-500">
+                        No recent transactions
+                      </p>
                       )}
                     </div>
                   )}

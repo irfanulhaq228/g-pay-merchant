@@ -1,7 +1,7 @@
 import "./App.css";
 import Cookies from "js-cookie";
-import { Routes, Route } from "react-router-dom";
-import React, { useEffect, useState } from "react";
+import { Routes, Route, useNavigate } from "react-router-dom";
+import React, { useEffect, useState, useRef } from "react";
 
 import Home from "./Components/Home/Home";
 import Payout from "./Pages/Payout/Payout";
@@ -24,6 +24,9 @@ import ReportsAndAnalytics from "./Pages/Reports-&-Analytics/ReportsAndAnalytics
 import SystemConfigurationIntegration from "./Pages/System-Configuration-Integration/SystemConfigurationIntegration";
 
 function App() {
+  const navigate = useNavigate();
+  const inactivityTimeoutRef = useRef(null);
+  const tabCloseTimeoutRef = useRef(null);
 
   const [selectedPage, setSelectedPage] = useState("");
   const [loginType, setLoginType] = useState(Cookies.get("loginType") || "");
@@ -33,11 +36,61 @@ function App() {
   const [authorization, setAuthorization] = useState(Cookies.get("merchantToken") ? true : false);
   const [merchantVerified, setMerchantVerified] = useState(localStorage.getItem("merchantVerified") === "true" ? true : localStorage.getItem("merchantVerified") === "false" ? false : false);
 
+  const fn_logout = () => {
+    Cookies.remove("merchantToken");
+    Cookies.remove("loginType");
+    localStorage.removeItem("permissions");
+    localStorage.removeItem("merchantVerified");
+    setAuthorization(false);
+    navigate("/login");
+  };
+
   useEffect(() => {
     if (window.location.pathname === "/login") {
       setMerchantVerified(true);
     }
   }, []);
+
+  useEffect(() => {
+    if (!authorization) return;
+
+    const activityEvents = ["mousemove", "keydown", "scroll", "click"];
+
+    const resetInactivityTimer = () => {
+      clearTimeout(inactivityTimeoutRef.current);
+      inactivityTimeoutRef.current = setTimeout(() => {
+        fn_logout();
+      }, 10 * 60 * 1000);
+    };
+    
+    const handleTabBlur = () => {
+      tabCloseTimeoutRef.current = setTimeout(() => {
+        fn_logout();
+      }, 5 * 60 * 1000);
+    };
+
+    const handleTabFocus = () => {
+      clearTimeout(tabCloseTimeoutRef.current);
+    };
+
+    activityEvents.forEach((event) =>
+      window.addEventListener(event, resetInactivityTimer)
+    );
+    window.addEventListener("blur", handleTabBlur);
+    window.addEventListener("focus", handleTabFocus);
+
+    resetInactivityTimer();
+
+    return () => {
+      activityEvents.forEach((event) =>
+        window.removeEventListener(event, resetInactivityTimer)
+      );
+      window.removeEventListener("blur", handleTabBlur);
+      window.removeEventListener("focus", handleTabFocus);
+      clearTimeout(inactivityTimeoutRef.current);
+      clearTimeout(tabCloseTimeoutRef.current);
+    };
+  }, [authorization]);
 
   return (
     <>

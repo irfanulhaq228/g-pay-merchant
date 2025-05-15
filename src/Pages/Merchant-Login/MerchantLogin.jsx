@@ -47,6 +47,7 @@ const MerchantLogin = ({ authorization, setAuthorization, setMerchantVerified, s
         setMerchantVerified(response?.merchantVerified);
         setGlobalLoginType(response?.type);
         setAuthorization(true);
+        sessionStorage.setItem("session", "session");
         if (response?.type === "merchant") {
           navigate("/");
         } else {

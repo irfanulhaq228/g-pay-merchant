@@ -24,9 +24,6 @@ import ReportsAndAnalytics from "./Pages/Reports-&-Analytics/ReportsAndAnalytics
 import SystemConfigurationIntegration from "./Pages/System-Configuration-Integration/SystemConfigurationIntegration";
 
 function App() {
-  const navigate = useNavigate();
-  const inactivityTimeoutRef = useRef(null);
-  const tabCloseTimeoutRef = useRef(null);
 
   const [selectedPage, setSelectedPage] = useState("");
   const [loginType, setLoginType] = useState(Cookies.get("loginType") || "");
@@ -36,61 +33,100 @@ function App() {
   const [authorization, setAuthorization] = useState(Cookies.get("merchantToken") ? true : false);
   const [merchantVerified, setMerchantVerified] = useState(localStorage.getItem("merchantVerified") === "true" ? true : localStorage.getItem("merchantVerified") === "false" ? false : false);
 
-  const fn_logout = () => {
-    Cookies.remove("merchantToken");
-    Cookies.remove("loginType");
-    localStorage.removeItem("permissions");
-    localStorage.removeItem("merchantVerified");
-    setAuthorization(false);
-    navigate("/login");
+const navigate = useNavigate();
+const inactivityTimeoutRef = useRef(null);
+const tabCloseTimeoutRef = useRef(null);
+
+const fn_logout = () => {
+  Cookies.remove("merchantToken");
+  Cookies.remove("loginType");
+  localStorage.removeItem("permissions");
+  localStorage.removeItem("merchantVerified");
+  localStorage.removeItem("lastTabClosedAt");
+  setAuthorization(false);
+  navigate("/login");
+};
+
+// ⏱️ Check if last closed time was over 1 minute ago
+useEffect(() => {
+  const token = Cookies.get("merchantToken");
+  const lastClosedAt = localStorage.getItem("lastTabClosedAt");
+
+  if (token && lastClosedAt) {
+    const closedTime = parseInt(lastClosedAt, 10);
+    const now = Date.now();
+    const oneMinute = 1 * 60 * 1000;
+
+    if (now - closedTime > oneMinute) {
+      fn_logout(); // Session expired after tab close
+    } else {
+      // Still within 1 minute — clear it
+      localStorage.removeItem("lastTabClosedAt");
+    }
+  }
+}, []);
+
+// 🕓 Inactivity and tab blur handling
+useEffect(() => {
+  if (!authorization) return;
+
+  const activityEvents = ["mousemove", "keydown", "scroll", "click"];
+
+  const resetInactivityTimer = () => {
+    clearTimeout(inactivityTimeoutRef.current);
+    inactivityTimeoutRef.current = setTimeout(() => {
+      fn_logout(); // 10 min inactivity logout
+    }, 10 * 60 * 1000);
   };
 
-  useEffect(() => {
-    if (window.location.pathname === "/login") {
-      setMerchantVerified(true);
-    }
-  }, []);
+  const handleTabBlur = () => {
+    clearTimeout(tabCloseTimeoutRef.current);
+    tabCloseTimeoutRef.current = setTimeout(() => {
+      fn_logout(); // Optional: logout after 5 min tab blur
+    }, 5 * 60 * 1000);
+  };
 
-  useEffect(() => {
-    if (!authorization) return;
+  const handleTabFocus = () => {
+    clearTimeout(tabCloseTimeoutRef.current);
+  };
 
-    const activityEvents = ["mousemove", "keydown", "scroll", "click"];
+  activityEvents.forEach((event) =>
+    window.addEventListener(event, resetInactivityTimer)
+  );
+  window.addEventListener("blur", handleTabBlur);
+  window.addEventListener("focus", handleTabFocus);
 
-    const resetInactivityTimer = () => {
-      clearTimeout(inactivityTimeoutRef.current);
-      inactivityTimeoutRef.current = setTimeout(() => {
-        fn_logout();
-      }, 10 * 60 * 1000);
-    };
-    
-    const handleTabBlur = () => {
-      tabCloseTimeoutRef.current = setTimeout(() => {
-        fn_logout();
-      }, 5 * 60 * 1000);
-    };
+  resetInactivityTimer();
 
-    const handleTabFocus = () => {
-      clearTimeout(tabCloseTimeoutRef.current);
-    };
-
+  return () => {
     activityEvents.forEach((event) =>
-      window.addEventListener(event, resetInactivityTimer)
+      window.removeEventListener(event, resetInactivityTimer)
     );
-    window.addEventListener("blur", handleTabBlur);
-    window.addEventListener("focus", handleTabFocus);
+    window.removeEventListener("blur", handleTabBlur);
+    window.removeEventListener("focus", handleTabFocus);
+    clearTimeout(inactivityTimeoutRef.current);
+    clearTimeout(tabCloseTimeoutRef.current);
+  };
+}, [authorization]);
 
-    resetInactivityTimer();
+// 💾 Store tab close time
+useEffect(() => {
+  const handleTabClose = () => {
+    localStorage.setItem("lastTabClosedAt", Date.now().toString());
+  };
 
-    return () => {
-      activityEvents.forEach((event) =>
-        window.removeEventListener(event, resetInactivityTimer)
-      );
-      window.removeEventListener("blur", handleTabBlur);
-      window.removeEventListener("focus", handleTabFocus);
-      clearTimeout(inactivityTimeoutRef.current);
-      clearTimeout(tabCloseTimeoutRef.current);
-    };
-  }, [authorization]);
+  window.addEventListener("beforeunload", handleTabClose);
+  return () => {
+    window.removeEventListener("beforeunload", handleTabClose);
+  };
+}, []);
+
+// ✅ If on login route, reset verified state
+useEffect(() => {
+  if (window.location.pathname === "/login") {
+    setMerchantVerified(true);
+  }
+}, []);
 
   return (
     <>

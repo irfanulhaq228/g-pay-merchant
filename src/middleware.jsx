@@ -3,7 +3,8 @@ import { useLocation, useNavigate } from "react-router-dom";
 import Cookies from "js-cookie";
 import axios from "axios";
 import BACKEND_URL from "./api/api";
-
+import CircularProgress from '@mui/material/CircularProgress';
+import Box from '@mui/material/Box';
 
 export default function AuthCheck({ children }) {
   const location = useLocation();
@@ -52,7 +53,11 @@ export default function AuthCheck({ children }) {
   }, [location.pathname, navigate]);
 
   if (isChecking) {
-    return <div className="w-full h-screen flex items-center justify-center">Loading ...</div>;
+    return (
+      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+        <CircularProgress />
+      </Box>
+    );
   }
 
   return children;

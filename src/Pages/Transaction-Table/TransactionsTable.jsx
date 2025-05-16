@@ -522,8 +522,17 @@ const TransactionsTable = ({ setSelectedPage, authorization, showSidebar, permis
                           )}
                         </td>
                         <td className="p-4 text-[13px] font-[700] text-[#000000B2]">
-                          <FaIndianRupeeSign className="inline-block mt-[-1px]" />{" "}
-                          {transaction?.total}
+                          {transaction?.bankId?.accountType === "crypto" ? (
+                            <div>
+                              <span className="text-[#000000B2]">$ {transaction?.dollarAmount}</span>
+                              <span className="text-[#000000B2] ml-2">/ ₹ {transaction?.total}</span>
+                            </div>
+                          ) : (
+                            <div>
+                              <FaIndianRupeeSign className="inline-block mt-[-1px]" />{" "}
+                              {transaction?.total}
+                            </div>
+                          )}
                         </td>
                         <td className="p-4 text-[12px] font-[700] text-[#0864E8]">{transaction?.utr}</td>
                         <td className="p-4 text-[13px] font-[500]">
@@ -644,6 +653,8 @@ const TransactionsTable = ({ setSelectedPage, authorization, showSidebar, permis
                 {
                   label: "Total Amount:",
                   value: selectedTransaction?.total,
+                  isCrypto: selectedTransaction?.bankId?.accountType === "crypto",
+                  dollarAmount: selectedTransaction?.dollarAmount
                 },
                 {
                   label: "UTR#:",
@@ -689,29 +700,33 @@ const TransactionsTable = ({ setSelectedPage, authorization, showSidebar, permis
                         resize: "none",
                       }}
                     />
+                  ) : field.isCrypto ? (
+                    <div className="w-[50%] text-[12px] input-placeholder-black bg-gray-200 p-2">
+                      <span>$ {field.dollarAmount}</span>
+                      <span className="ml-2">/ ₹ {field.value}</span>
+                    </div>
                   ) : (
                     <Input
                       prefix={
-                        field.label === "Amount:" ? (
+                        field.label === "Total Amount:" ? (
                           <FaIndianRupeeSign className="mt-[2px]" />
                         ) : null
                       }
                       className={`w-[50%] text-[12px] input-placeholder-black ${isEdit &&
-                        (field.label === "Amount:" ||
+                        (field.label === "Total Amount:" ||
                           field?.label === "UTR#:")
                         ? "bg-white"
-                        : "bg-gray-200"
-                        }`}
+                        : "bg-gray-200"}`}
                       readOnly={
                         isEdit &&
-                          (field.label === "Amount:" ||
+                          (field.label === "Total Amount:" ||
                             field?.label === "UTR#:")
                           ? false
                           : true
                       }
                       value={field?.value}
                       onChange={(e) => {
-                        if (field?.label === "Amount:") {
+                        if (field?.label === "Total Amount:") {
                           setSelectedTransaction((prev) => ({
                             ...prev,
                             total: e.target.value,

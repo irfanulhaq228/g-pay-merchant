@@ -545,8 +545,17 @@ const DirectPaymentPage = ({ setSelectedPage, authorization, showSidebar, permis
                           )}
                         </td>
                         <td className="p-4 text-[13px] font-[700] text-[#000000B2] text-nowrap">
-                          <FaIndianRupeeSign className="inline-block mt-[-1px]" />{" "}
-                          {transaction?.total}
+                          {transaction?.bankId?.accountType === "crypto" ? (
+                            <>
+                              <span className="text-[#000000B2]">$ {transaction?.dollarAmount}</span>
+                              <span className="text-[#000000B2] ml-2">/ ₹ {transaction?.total}</span>
+                            </>
+                          ) : (
+                            <>
+                              <FaIndianRupeeSign className="inline-block mt-[-1px]" />{" "}
+                              {transaction?.total}
+                            </>
+                          )}
                         </td>
                         <td className="p-4 text-[12px] font-[700] text-[#0864E8]">
                           {transaction?.utr}
@@ -677,6 +686,8 @@ const DirectPaymentPage = ({ setSelectedPage, authorization, showSidebar, permis
                 {
                   label: "Amount:",
                   value: selectedTransaction?.total,
+                  isCrypto: selectedTransaction?.bankId?.accountType === "crypto",
+                  dollarAmount: selectedTransaction?.dollarAmount
                 },
                 {
                   label: "UTR#:",
@@ -722,6 +733,11 @@ const DirectPaymentPage = ({ setSelectedPage, authorization, showSidebar, permis
                         resize: "none",
                       }}
                     />
+                  ) : field.isCrypto ? (
+                    <div className="w-[50%] text-[12px] input-placeholder-black bg-gray-200 p-2">
+                      <span>$ {field.dollarAmount}</span>
+                      <span className="ml-2">/ ₹ {field.value}</span>
+                    </div>
                   ) : (
                     <Input
                       prefix={

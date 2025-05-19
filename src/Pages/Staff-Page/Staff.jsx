@@ -16,13 +16,13 @@ const Staff = ({ setSelectedPage, authorization, showSidebar }) => {
   const [editStaffId, setEditStaffId] = useState(null);
 
   const [checkedPages, setCheckPages] = useState({
-    dashboard: { view: false, edit: false },
-    transactionHistory: { view: false, edit: false },
-    directPayment: { view: false, edit: false },
-    approvalPoints: { view: false, edit: false },
-    merchantProfile: { view: false, edit: false },
-    reportsAnalytics: { view: false, edit: false },
-    support: { view: false, edit: false },
+    dashboard: { view: true, edit: false },
+    transactionHistory: { view: true, edit: true },
+    directPayment: { view: true, edit: true },
+    approvalPoints: { view: true, edit: true },
+    merchantProfile: { view: true, edit: true },
+    reportsAnalytics: { view: true, edit: true },
+    support: { view: true, edit: true },
     uploadStatement: { view: false, edit: false }
   });
 
@@ -41,13 +41,13 @@ const Staff = ({ setSelectedPage, authorization, showSidebar }) => {
       type: ""
     });
     setCheckPages({
-      dashboard: { view: false, edit: false },
-      transactionHistory: { view: false, edit: false },
-      directPayment: { view: false, edit: false },
-      approvalPoints: { view: false, edit: false },
-      merchantProfile: { view: false, edit: false },
-      reportsAnalytics: { view: false, edit: false },
-      support: { view: false, edit: false },
+      dashboard: { view: true, edit: false },
+      transactionHistory: { view: true, edit: true },
+      directPayment: { view: true, edit: true },
+      approvalPoints: { view: true, edit: true },
+      merchantProfile: { view: true, edit: true },
+      reportsAnalytics: { view: true, edit: true },
+      support: { view: true, edit: true },
       uploadStatement: { view: false, edit: false }
     })
     setErrors({});
@@ -159,47 +159,15 @@ const Staff = ({ setSelectedPage, authorization, showSidebar }) => {
     });
 
     setCheckPages({
-      dashboard: { 
-        view: true, 
-        edit: false 
-      },
-      transactionHistory: { 
-        view: true, 
-        edit: false 
-      },
-      directPayment: { 
-        view: true, 
-        edit: false 
-      },
-      approvalPoints: { 
-        view: true, 
-        edit: false 
-      },
-      merchantProfile: { 
-        view: true, 
-        edit: true 
-      },
-      reportsAnalytics: { 
-        view: true, 
-        edit: true 
-      },
-      support: { 
-        view: true, 
-        edit: true 
-      },
-      uploadStatement: { 
-        view: false, 
-        edit: false 
-      },
-      settings: { 
-        view: false, 
-        edit: false 
-      },
-      staff: { 
-        view: true, 
-        edit: false 
-      },
-    });
+      dashboard: { view: true, edit: false },
+      transactionHistory: { view: true, edit: true },
+      directPayment: { view: true, edit: true },
+      approvalPoints: { view: true, edit: true },
+      merchantProfile: { view: true, edit: true },
+      reportsAnalytics: { view: true, edit: true },
+      support: { view: true, edit: true },
+      uploadStatement: { view: false, edit: false }
+    })
 
     setEditStaffId(staff._id);
     setIsEditMode(true);
@@ -397,13 +365,13 @@ const Staff = ({ setSelectedPage, authorization, showSidebar }) => {
                                 handleStatusChange(staff._id, checked)
                               }
                             />
-                             <Button
+                            <Button
                               className="bg-green-100 hover:bg-green-200 text-green-600 rounded-full p-2 flex items-center justify-center min-w-[32px] h-[32px] border-none"
                               title="Edit"
                               onClick={() => handleEdit(staff)}
                             >
                               <FiEdit size={16} />
-                            </Button> 
+                            </Button>
                             <Button
                               className="bg-red-100 hover:bg-red-200 text-red-600 rounded-full p-2 flex items-center justify-center min-w-[32px] h-[32px] border-none"
                               title="Delete"

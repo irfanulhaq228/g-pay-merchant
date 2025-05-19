@@ -2,33 +2,42 @@ import axios from "axios";
 import Cookies from "js-cookie";
 import moment from "moment/moment";
 
-// export const BACKEND_URL = "https://backend.gpay.one";
-export const BACKEND_URL = "http://46.202.166.64:8015";
+export const BACKEND_URL = "https://backend.gpay.one";
+// export const BACKEND_URL = "http://46.202.166.64:8015";
 export const PDF_READ_URL = "https://pdf.royal247.org/parse-statement"
 
 // ------------------------------------- Merchant Login api------------------------------------
-export const fn_loginMerchantApi = async (data, setPermissionsData) => {
+export const fn_loginMerchantApi = async (data) => {
+    try {
+        const response = await axios.post(`${BACKEND_URL}/merchant/login`, data);
+        if (response?.status === 200) {
+            return { status: true, message: "OTP sents to Email" }
+        };
+    } catch (error) {
+        if (error?.response?.status === 400) {
+            return { status: false, message: error?.response?.data?.message };
+        }
+        return { status: false, message: "Network Error" };
+    }
+};
+
+export const fn_otpVerifyApi = async (data, setPermissionsData) => {
     try {
         const response = await axios.post(`${BACKEND_URL}/merchant/login`, data);
 
-        let id;
-        let type;
-        let message;
-        let website;
-        let merchantVerified;
+        let id; let type; let message; let website; let permissions; let merchantVerified;
         let token = response?.data?.token;
-        let permissions;
+
         if (response?.data?.type === "merchant") {
             type = "merchant";
             id = response?.data?.data?._id;
             website = response?.data?.data?.website;
             message = "Merchant Logged in successfully";
             merchantVerified = response?.data?.data?.verify;
-
             localStorage.setItem("userName", response?.data?.data?.merchantName);
         } else {
             type = response?.data?.data?.type;
-            message = "Staff Logged in successfully";
+            message = "Logged in successfully";
             id = response?.data?.data?.merchantId?._id;
             website = response?.data?.data?.merchantId?.website;
             merchantVerified = response?.data?.data?.merchantId?.verify;
@@ -48,22 +57,15 @@ export const fn_loginMerchantApi = async (data, setPermissionsData) => {
             setPermissionsData(permissions);
             localStorage.setItem("permissions", JSON.stringify(permissions));
             localStorage.setItem("userName", response?.data?.data?.userName);
+            localStorage.setItem("email", response?.data?.data?.email);
         };
         Cookies.set("merchantId", id);
         Cookies.set("loginType", type);
         Cookies.set("website", website);
         Cookies.set("merchantToken", token);
         localStorage.setItem("merchantVerified", merchantVerified);
-        return {
-            id: id,
-            type: type,
-            status: true,
-            token: token,
-            message: message,
-            website: website,
-            permissions: permissions,
-            merchantVerified: merchantVerified,
-        };
+
+        return { id: id, type: type, status: true, token: token, message: message, website: website, permissions: permissions, merchantVerified: merchantVerified };
     } catch (error) {
         if (error?.response?.status === 400) {
             return { status: false, message: error?.response?.data?.message };

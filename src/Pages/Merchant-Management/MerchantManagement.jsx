@@ -496,7 +496,7 @@ const MerchantManagement = ({ setSelectedPage, authorization, showSidebar, permi
               </div>
             </div>
             <p className="text-gray-500 text-[19px] font-[600] text-center mt-4">
-              {merchantData?.merchantName}
+              {Cookies.get("loginType") === "staff" ? localStorage.getItem('userName') : merchantData?.merchantName}
             </p>
             <div className="m-3 mt-6">
               <h3 className="text-[16px] font-[600] border-b pb-2">
@@ -510,7 +510,7 @@ const MerchantManagement = ({ setSelectedPage, authorization, showSidebar, permi
                   <span className="text-[12px] font-[600] min-w-[105px] max-w-[105px] ">
                     Email:
                   </span>
-                  <span className="text-[12px]">{merchantData?.email}</span>
+                  <span className="text-[12px]">{Cookies.get("loginType") === "staff" ? localStorage.getItem('email') : merchantData?.email}</span>
                 </div>
                 <div className="flex">
                   <span className="text-[12px] font-[600] min-w-[105px] max-w-[105px]">

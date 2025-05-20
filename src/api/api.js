@@ -11,8 +11,55 @@ export const fn_loginMerchantApi = async (data) => {
     try {
         const response = await axios.post(`${BACKEND_URL}/merchant/login`, data);
         if (response?.status === 200) {
-            return { status: true, message: "OTP sents to Email" }
-        };
+            let id; let type; let message; let website; let permissions; let merchantVerified;
+            let token = response?.data?.token;
+
+            if (response?.data?.type === "merchant") {
+                type = "merchant";
+                id = response?.data?.data?._id;
+                website = response?.data?.data?.website;
+                message = "Merchant Logged in successfully";
+                merchantVerified = response?.data?.data?.verify;
+                localStorage.setItem("userName", response?.data?.data?.merchantName);
+            } else {
+                type = response?.data?.data?.type;
+                message = "Logged in successfully";
+                id = response?.data?.data?.merchantId?._id;
+                website = response?.data?.data?.merchantId?.website;
+                merchantVerified = response?.data?.data?.merchantId?.verify;
+
+                permissions = {
+                    userName: response?.data?.data?.userName,
+                    email: response?.data?.data?.email,
+                    dashboard: response?.data?.data?.dashboard,
+                    transactionHistory: response?.data?.data?.transactionHistory,
+                    directPayment: response?.data?.data?.directPayment,
+                    approvalPoints: response?.data?.data?.approvalPoints,
+                    merchantProfile: response?.data?.data?.merchantProfile,
+                    reportsAnalytics: response?.data?.data?.reportsAnalytics,
+                    support: response?.data?.data?.support,
+                    uploadStatement: response?.data?.data?.uploadStatement,
+                };
+                localStorage.setItem("permissions", JSON.stringify(permissions));
+                localStorage.setItem("userName", response?.data?.data?.userName);
+                localStorage.setItem("email", response?.data?.data?.email);
+            }
+            Cookies.set("merchantId", id);
+            Cookies.set("loginType", type);
+            Cookies.set("website", website);
+            Cookies.set("merchantToken", token);
+            localStorage.setItem("merchantVerified", merchantVerified);
+
+            return { 
+                status: true, 
+                message: message, 
+                type: type, 
+                token: token, 
+                website: website, 
+                permissions: permissions, 
+                merchantVerified: merchantVerified 
+            };
+        }
     } catch (error) {
         if (error?.response?.status === 400) {
             return { status: false, message: error?.response?.data?.message };

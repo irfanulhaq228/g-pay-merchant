@@ -563,9 +563,9 @@ const DirectPaymentPage = ({ setSelectedPage, authorization, showSidebar, permis
                         <td className="p-4 text-[13px] font-[500]">
                           <span
                             className={`px-2 py-1 rounded-[20px] text-nowrap text-[11px] font-[600] min-w-20 flex items-center justify-center
-                              ${transaction?.status === "Decline" ? "bg-[#FF7A8F33] text-[#FF002A]" : transaction?.status === "Pending" ? "bg-[#FFC70126] text-[#FFB800]" : transaction?.approval === true ? "bg-[#10CB0026] text-[#0DA000]" : (transaction?.reason && transaction?.reason !== "") ? "bg-[#cc7aff33] text-[#9929d5]" : "bg-[#00000026] text-[#5a5a5a]"}`}
+                              ${transaction?.status === "Decline" ? "bg-[#FF7A8F33] text-[#FF002A]" : transaction?.status === "Pending" ? "bg-[#FFC70126] text-[#FFB800]" : transaction?.trnStatus === true ? "bg-[#10CB0026] text-[#0DA000]" : (transaction?.reason && transaction?.reason !== "") ? "bg-[#cc7aff33] text-[#9929d5]" : "bg-[#00000026] text-[#5a5a5a]"}`}
                           >
-                            {transaction?.status === "Decline" ? "Transaction Decline" : transaction?.status === "Pending" ? "Transaction Pending" : transaction?.approval === true ? "Points Approved" : (transaction?.reason && transaction?.reason !== "") ? "Points Decline" : "Points Pending"}
+                            {transaction?.trnStatus}
                           </span>
                         </td>
                         <td className="p-4 flex space-x-2 transaction-view-model">
@@ -818,15 +818,7 @@ const DirectPaymentPage = ({ setSelectedPage, authorization, showSidebar, permis
                               : "text-[#FF002A]"
                           }`}
                       >
-                        {selectedTransaction?.status === "Decline"
-                          ? "Transaction Decline"
-                          : selectedTransaction?.status === "Pending"
-                            ? "Transaction Pending"
-                            : selectedTransaction?.approval === true
-                              ? "Points Approved"
-                              : (selectedTransaction?.reason && selectedTransaction?.reason !== "")
-                                ? "Points Decline"
-                                : "Points Pending"}
+                        {selectedTransaction?.trnStatus}----
                       </span>
                       <p className="text-[14px] font-[400] ml-6">
                         {moment(selectedTransaction?.updatedAt).tz('Asia/Kolkata').format('DD MMM YYYY, hh:mm A')}

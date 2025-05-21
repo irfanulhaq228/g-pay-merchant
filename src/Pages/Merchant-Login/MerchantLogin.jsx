@@ -136,9 +136,9 @@ const MerchantLogin = ({ authorization, setAuthorization, setMerchantVerified, s
     <section style={styles.section}>
       <div style={styles.container}>
         <div style={styles.header}>
-          {/* <img src={logo} alt="Logo" style={styles.logo} /> */}
+          <img src={logo} alt="Logo" style={styles.logo} />
           <Title level={2} style={styles.title}>
-            User Login
+            Merchant Login
           </Title>
         </div>
         <Form

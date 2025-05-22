@@ -7,9 +7,8 @@ import { FiDownload, FiEye } from "react-icons/fi";
 import React, { useState, useEffect } from "react";
 import "react-datepicker/dist/react-datepicker.css";
 import { MagnifyingGlass } from "react-loader-spinner";
-import { Pagination, notification, Modal, Input, Form } from "antd";
+import { Pagination, notification, Modal, Input, Form, Tabs } from "antd";
 import { fn_uploadExcelFile, fn_getUploadExcelFile, fn_singlePayout } from "../../api/api";
-
 
 const Payout = ({ authorization, showSidebar }) => {
   const navigate = useNavigate();
@@ -20,6 +19,7 @@ const Payout = ({ authorization, showSidebar }) => {
   const [currentPage, setCurrentPage] = useState(1);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [form] = Form.useForm();
+  const [selectedTab, setSelectedTab] = useState("Bank");
 
   const handleFileUpload = async (event) => {
     setLoading(true);
@@ -136,14 +136,20 @@ const Payout = ({ authorization, showSidebar }) => {
     form.resetFields();
   };
 
+  const handleTabChange = (key) => {
+    setSelectedTab(key);
+    form.resetFields(); // Reset form fields when switching tabs
+  };
+
   const handleSubmitPayout = async (values) => {
     try {
       const payoutData = {
         username: values.username,
         account: values.account,
-        ifsc: values.ifsc,
+        ifsc: selectedTab === "Bank" ? values.ifsc : undefined,
+        bankName: selectedTab === "Bank" ? values.bankName : undefined,
         amount: values.amount,
-        type: "single"
+        type: "single",
       };
 
       const response = await fn_singlePayout(payoutData);
@@ -315,6 +321,10 @@ const Payout = ({ authorization, showSidebar }) => {
         onOk={() => form.submit()}
         width={600}
       >
+        <Tabs defaultActiveKey="Bank" onChange={handleTabChange}>
+          <Tabs.TabPane tab="Bank" key="Bank" />
+          <Tabs.TabPane tab="UPI" key="UPI" />
+        </Tabs>
         <Form
           form={form}
           layout="vertical"
@@ -329,21 +339,33 @@ const Payout = ({ authorization, showSidebar }) => {
             <Input placeholder="Enter account holder name" className="text-[14px]" />
           </Form.Item>
 
-          <Form.Item
-            label="Account Number"
-            name="account"
-            rules={[{ required: true, message: 'Please enter account number' }]}
-          >
-            <Input placeholder="Enter account number" className="text-[14px]" />
-          </Form.Item>
+          {selectedTab === "Bank" && (
+            <Form.Item
+              label="Bank Name"
+              name="bankName"
+              rules={[{ required: true, message: "Please enter bank name" }]}
+            >
+              <Input placeholder="Enter bank name" className="text-[14px]" />
+            </Form.Item>
+          )}
 
           <Form.Item
-            label="IFSC Number"
-            name="ifsc"
-            rules={[{ required: true, message: 'Please enter IFSC number' }]}
+            label={selectedTab === "Bank" ? "Account Number" : "UPI ID"}
+            name="account"
+            rules={[{ required: true, message: `Please enter ${selectedTab === "Bank" ? "account number" : "UPI ID"}` }]}
           >
-            <Input placeholder="Enter IFSC number" className="text-[14px]" />
+            <Input placeholder={`Enter ${selectedTab === "Bank" ? "account number" : "UPI ID"}`} className="text-[14px]" />
           </Form.Item>
+
+          {selectedTab === "Bank" && (
+            <Form.Item
+              label="IFSC Number"
+              name="ifsc"
+              rules={[{ required: true, message: "Please enter IFSC number" }]}
+            >
+              <Input placeholder="Enter IFSC number" className="text-[14px]" />
+            </Form.Item>
+          )}
 
           <Form.Item
             label="Amount"

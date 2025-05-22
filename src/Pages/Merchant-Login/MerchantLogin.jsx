@@ -140,6 +140,9 @@ const MerchantLogin = ({ authorization, setAuthorization, setMerchantVerified, s
           <Title level={2} style={styles.title}>
             Merchant Login
           </Title>
+          <Text style={styles.text}>
+            Welcome back! Please enter your details below to log in as an admin.
+          </Text>
         </div>
         <Form
           name="normal_login"
